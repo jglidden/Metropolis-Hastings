@@ -1,43 +1,59 @@
 #an algorithm which takes as an argument any probability density function (not necessarily normalized) and returns a collection of samples from the normalized distribution
 import numpy as np
-#import pylab as plt
+import pylab as plt
+import scipy
 
-def pdis(x):
-    #this will be our unnormalized function (for now)
-    if 0<x<1000:
-        y = 1000-x
-    else:
-        y = 0
+from scipy.stats import norm
 
-    return y
+gauss = lambda x: 10*norm.pdf(x)
 
-def metrop(func = pdis):
+sumgauss = lambda x: 10*norm.pdf(x) + 15*norm.pdf(x,loc = 20, scale = 4)
+
+def metrop(dist,full_out=False):
     #TODO look up how to initialize markov-chain?
 
-    init = 1
+    init = 10
+    sigma = 1
     samples = [init]
+    accepted = 0.
+    logdis = lambda x: np.log(dist(x))
     for u in range(1000):
-        #TODO more intelligent way to figure out how long to run
         x_t = samples[u]
         #we will use a Gaussian centered at xt for Q
-        #TODO pick sigma intelligently
-        sigma = 5
         x_prime = np.random.normal(x_t,5)
 
-        a = func(x_prime)/func(x_t)
+        a = dist(x_prime)/dist(x_t)
+        #print a
 
-        if a>=1:
+        if logdis(x_prime)>=logdis(x_t):
             samples+=[x_prime]
+            accepted+=1.
         else:
             i = np.random.rand()
             if i<=a:
                 samples+=[x_prime]
+                accepted+=1.
             else:
                 samples+=[x_t]
+    info = accepted/1000
 
-    return samples
+    if full_out==True:
+        return samples,info
+    else:
+        return samples
 
 #TODO extend to multiple dimensions
+
+#def test(samples,dist):
+#    #attempt to compute k-l divergence
+#    #d(P|Q) = \int(p(x)*log(p(x)/q(x))dx)
+#    d = np.sum(np.log(dist(x)
+
+
+
+
+
+
 
 
     
