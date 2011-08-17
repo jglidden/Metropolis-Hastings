@@ -15,7 +15,7 @@ exp = lambda x: 10*expon.pdf(x)
 exgauss = lambda x: 10*expon.pdf(x) + 15*norm.pdf(x,loc = 20, scale = 4)
 
 
-def metrop(dist,full_out=False):
+def metrop(dist,n=1000,full_out=False):
     #TODO look up how to initialize markov-chain?
 
     init = 10
@@ -46,7 +46,7 @@ def metrop(dist,full_out=False):
 
     samples+=[x_prime]
 
-    for u in range(10000):
+    for u in range(n):
         x_t = samples[u]
         #we will use a Gaussian centered at xt for Q
         x_prime = np.random.normal(x_t,5)
@@ -71,9 +71,8 @@ def metrop(dist,full_out=False):
     else:
         return samples
 
-#TODO extend to multiple dimensions
 
-def test(samples,dist):
+def kldiv(samples,dist):
     #attempt to compute k-l divergence
     #d(P|Q) = \int(p(x)*log(p(x)/q(x))dx)
 
@@ -90,19 +89,36 @@ def test(samples,dist):
     qx = [[x[u]<=a<x[u+1] for a in sampmatrix[u]] for u in range(len(x)-1)]
     qx = np.array(qx).sum(axis=1)/(1.*len(samples))
 
-    nonzeroq = qx.nonzero()[0]
-    qx = qx[nonzeroq]
-    px = px[nonzeroq]
+    #nonzeroq = qx.nonzero()[0]
+    #qx = qx[nonzeroq]
+    #px = px[nonzeroq]
+
+    for i in range(1,len(qx)):
+       if not(qx[i]==0):
+          pass 
+       else:
+          qx[i] = qx[i-1]
+   
 
     l = (samples.max()-samples.min())/len(qx)
 
     nonzerop = px.nonzero()[0]
     qx = qx[nonzerop]
-    px = px[nonzerop]
+    px = l*px[nonzerop]
      
-    evals = (l*(px*np.log(px/qx)))
+    evals = px*np.log(px/qx)
     dpq = np.sum(evals)
 
-    return dpq,evals
+    return dpq
 
+#def plotkl(dist):
+#    d100 = kldiv(metrop(dist,100),dist)
+#    d1000 = kldiv(metrop(dist,1000),dist)
+#    d10000 = kldiv(metrop(dist,10000),dist)
+
+#    plt.plot([d100,d1000,d10000])
+#    plt.show()
+
+#    return [d100,d1000,d10000]
     
+
